@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PTA Treasurer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root {
+  --ink: #1a1a1a;
+  --ink2: #555;
+  --ink3: #999;
+  --paper: #fafaf8;
+  --surface: #fff;
+  --border: #e8e6e0;
+  --border2: #d4d0c8;
+  --accent: #2563eb;
+  --accent-light: #eff6ff;
+  --accent-mid: #bfdbfe;
+  --green: #16a34a;
+  --green-light: #f0fdf4;
+  --amber: #d97706;
+  --amber-light: #fffbeb;
+  --red: #dc2626;
+  --red-light: #fef2f2;
+  --mono: 'DM Mono', monospace;
+  --serif: 'Instrument Serif', serif;
+  --sans: 'DM Sans', sans-serif;
+  --r: 6px;
+  --r2: 10px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow2: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+
+body { min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ── HEADER ── */
+.header {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(250,250,248,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  display: flex; align-items: center; gap: 0; height: 56px;
+}
+.wordmark {
+  font-family: var(--serif);
+  font-size: 19px;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  margin-right: 40px;
+  white-space: nowrap;
+}
+.wordmark em { font-style: italic; color: var(--accent); }
+
+.nav { display: flex; gap: 2px; flex: 1; }
+.nav-btn {
+  padding: 6px 14px; border: none; border-radius: var(--r);
+  background: transparent; color: var(--ink2);
+  font-family: var(--sans); font-size: 13.5px; font-weight: 400;
+  cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  position: relative;
+}
+.nav-btn:hover { background: var(--border); color: var(--ink); }
+.nav-btn.active { background: var(--ink); color: var(--paper); }
+.nav-btn .badge-dot {
+  position: absolute; top: 5px; right: 5px;
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent); display: none;
+}
+.nav-btn .badge-dot.show { display: block; }
+
+.header-right { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+.user-pill {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 10px 5px 5px;
+  border: 1px solid var(--border);
+  border-radius: 999px; font-size: 13px; color: var(--ink2);
+  background: var(--surface);
+}
+.user-avatar {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--accent-light); border: 1px solid var(--accent-mid);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 500; color: var(--accent);
+  overflow: hidden;
+}
+.user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ── LAYOUT ── */
+.main { flex: 1; max-width: 900px; margin: 0 auto; width: 100%; padding: 36px 24px 80px; }
+
+/* ── PANELS ── */
+.panel { display: none; animation: fadeUp 0.2s ease; }
+.panel.active { display: block; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* ── SECTION TITLE ── */
+.section-head {
+  display: flex; align-items: baseline; gap: 12px;
+  margin-bottom: 28px;
+}
+.section-head h1 {
+  font-family: var(--serif);
+  font-size: 26px; font-weight: 400;
+  letter-spacing: -0.02em; color: var(--ink);
+}
+.section-head p { font-size: 13.5px; color: var(--ink3); }
+
+/* ── CARDS ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 24px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+.card-label {
+  font-size: 11px; font-weight: 500; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--ink3);
+  margin-bottom: 18px;
+}
+
+/* ── FORM ELEMENTS ── */
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label {
+  font-size: 12px; font-weight: 500; color: var(--ink2);
+  letter-spacing: 0.02em;
+}
+.field input, .field select, .field textarea {
+  font-family: var(--sans); font-size: 14px; color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 8px 11px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  width: 100%;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+  background: var(--surface);
+}
+.field input.mono { font-family: var(--mono); font-size: 13px; }
+.field input[type=number] { font-family: var(--mono); }
+.field textarea { resize: vertical; min-height: 64px; }
+
+/* number with $ prefix */
+.amount-wrap { position: relative; }
+.amount-wrap::before {
+  content: '$'; position: absolute; left: 11px; top: 50%;
+  transform: translateY(-50%); color: var(--ink3); font-size: 14px;
+  font-family: var(--mono); pointer-events: none;
+}
+.amount-wrap input { padding-left: 22px; }
+
+/* ── GRID ROWS ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px; }
+
+/* ── AUTOCOMPLETE ── */
+.autocomplete { position: relative; }
+.autocomplete-list {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: var(--r2); box-shadow: var(--shadow2);
+  max-height: 240px; overflow-y: auto; z-index: 200;
+  display: none;
+}
+.autocomplete-list.open { display: block; }
+.ac-item {
+  padding: 9px 12px; cursor: pointer;
+  display: flex; align-items: baseline; gap: 10px;
+  border-bottom: 1px solid var(--border); font-size: 13.5px;
+}
+.ac-item:last-child { border-bottom: none; }
+.ac-item:hover, .ac-item.focused { background: var(--accent-light); }
+.ac-code { font-family: var(--mono); font-size: 12px; color: var(--ink3); min-width: 38px; }
+.ac-label { color: var(--ink); }
+
+/* ── TAB PICKER ── */
+.tab-picker { display: flex; gap: 6px; flex-wrap: wrap; }
+.tab-chip {
+  padding: 5px 13px; border: 1px solid var(--border2);
+  border-radius: 999px; font-size: 12.5px; cursor: pointer;
+  background: transparent; color: var(--ink2);
+  font-family: var(--sans); transition: all 0.12s;
+}
+.tab-chip:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+.tab-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* ── FILE DROP ── */
+.file-drop {
+  border: 1.5px dashed var(--border2);
+  border-radius: var(--r2); padding: 28px 20px;
+  text-align: center; cursor: pointer;
+  color: var(--ink3); font-size: 14px;
+  transition: all 0.15s; background: var(--paper);
+  position: relative;
+}
+.file-drop:hover, .file-drop.dragover {
+  border-color: var(--accent); background: var(--accent-light);
+  color: var(--accent);
+}
+.file-drop .icon { font-size: 28px; margin-bottom: 8px; }
+.file-drop.has-file { border-style: solid; border-color: var(--green); background: var(--green-light); color: var(--green); }
+.file-drop .file-name { font-family: var(--mono); font-size: 12px; margin-top: 6px; }
+
+/* ── BUTTONS ── */
+.btn-row { display: flex; align-items: center; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+.btn {
+  padding: 9px 20px; border-radius: var(--r);
+  font-family: var(--sans); font-size: 13.5px; font-weight: 400;
+  cursor: pointer; border: 1px solid var(--border2);
+  background: var(--surface); color: var(--ink);
+  transition: all 0.15s; white-space: nowrap;
+}
+.btn:hover { background: var(--border); }
+.btn:active { transform: scale(0.98); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+.btn.primary {
+  background: var(--ink); color: var(--paper);
+  border-color: var(--ink);
+}
+.btn.primary:hover { background: #333; }
+.btn.accent {
+  background: var(--accent); color: #fff;
+  border-color: var(--accent);
+}
+.btn.accent:hover { background: #1d4ed8; }
+.btn.danger { color: var(--red); border-color: #fca5a5; }
+.btn.danger:hover { background: var(--red-light); }
+.btn.sm { padding: 5px 12px; font-size: 12.5px; }
+
+/* ── STATUS ── */
+.status-msg { font-size: 13px; }
+.status-msg.ok { color: var(--green); }
+.status-msg.err { color: var(--red); }
+.status-msg.info { color: var(--ink3); }
+
+/* ── RECONCILE TABLE ── */
+.recon-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.recon-table th {
+  text-align: left; padding: 8px 10px;
+  border-bottom: 1px solid var(--border); font-weight: 500;
+  color: var(--ink2); font-size: 12px;
+}
+.recon-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.recon-table tr:last-child td { border-bottom: none; }
+.recon-table tr.matched { background: var(--green-light); }
+.recon-table tr.unmatched { }
+.recon-table tr:hover td { background: rgba(0,0,0,0.02); }
+.pill {
+  display: inline-flex; align-items: center;
+  padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 500;
+}
+.pill.wd { background: var(--red-light); color: var(--red); }
+.pill.dep { background: var(--green-light); color: var(--green); }
+.pill.match { background: var(--green-light); color: var(--green); }
+.pill.nomatch { background: #f3f4f6; color: var(--ink3); }
+.pill.pending { background: var(--amber-light); color: var(--amber); }
+
+/* ── BALANCES ── */
+.balance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.balance-card {
+  border: 1px solid var(--border); border-radius: var(--r2);
+  padding: 20px; background: var(--paper);
+}
+.balance-card h3 { font-size: 13px; font-weight: 500; color: var(--ink2); margin-bottom: 14px; }
+.balance-card .field + .field { margin-top: 10px; }
+
+/* ── SIGN IN ── */
+.signin-page {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 32px; padding: 48px 24px;
+}
+.signin-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 48px 40px;
+  max-width: 400px; width: 100%;
+  box-shadow: var(--shadow2);
+  text-align: center;
+}
+.signin-card h1 { font-family: var(--serif); font-size: 28px; font-weight: 400; margin-bottom: 8px; }
+.signin-card h1 em { font-style: italic; color: var(--accent); }
+.signin-card p { color: var(--ink3); font-size: 14px; margin-bottom: 28px; line-height: 1.6; }
+.signin-card .divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+/* ── SEPARATOR ── */
+hr.sep { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+/* ── RECEIPT PREVIEW ── */
+.receipt-inline {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; background: var(--green-light);
+  border: 1px solid #bbf7d0; border-radius: var(--r);
+  font-size: 13px;
+}
+.receipt-inline .name { font-family: var(--mono); font-size: 12px; color: var(--green); }
+.receipt-inline a { color: var(--accent); font-size: 12px; text-decoration: none; }
+.receipt-inline a:hover { text-decoration: underline; }
+
+/* ── EXPORT COLS ── */
+.col-list { display: flex; flex-direction: column; gap: 8px; }
+.col-item {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 14px; cursor: pointer;
+}
+.col-item input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
+
+/* ── LOADING ── */
+.spinner {
+  display: inline-block; width: 15px; height: 15px;
+  border: 2px solid var(--border2); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin 0.65s linear infinite;
+  vertical-align: middle; margin-right: 6px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── RECENT ENTRIES ── */
+.recent-list { display: flex; flex-direction: column; gap: 0; }
+.recent-row {
+  display: grid; grid-template-columns: 60px 1fr 1fr 90px;
+  align-items: center; gap: 12px;
+  padding: 9px 0; border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.recent-row:last-child { border-bottom: none; }
+.recent-row .ck { font-family: var(--mono); color: var(--ink3); }
+.recent-row .amt { font-family: var(--mono); font-weight: 500; text-align: right; }
+
+/* ── EMPTY STATE ── */
+.empty { padding: 32px; text-align: center; color: var(--ink3); font-size: 14px; }
+
+/* ── ACCENT BAR ── */
+.accentbar { height: 3px; background: linear-gradient(90deg, var(--accent) 0%, #7c3aed 100%); }
+
+/* ── NOTIFICATION TOAST ── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--ink); color: var(--paper);
+  padding: 11px 18px; border-radius: var(--r2);
+  font-size: 13.5px; box-shadow: var(--shadow2);
+  z-index: 1000; opacity: 0; transform: translateY(8px);
+  transition: all 0.2s; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: none; }
+.toast.ok { background: var(--green); }
+.toast.err { background: var(--red); }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="accentbar"></div>
+
+<!-- SIGN IN PAGE (shown before auth) -->
+<div id="signin-page" class="signin-page" style="display:none">
+  <div class="signin-card">
+    <h1>PTA <em>Treasurer</em></h1>
+    <p>Check writing, reconciliation, and monthly reporting for your school's PTA.</p>
+    <div id="g-signin-btn"></div>
+    <div class="divider"></div>
+    <p style="font-size:12px;color:var(--ink3)">Requires access to Google Sheets and Google Drive. No data is stored outside your own Google account.</p>
+  </div>
+</div>
+
+<!-- MAIN APP (shown after auth) -->
+<div id="app" style="display:none">
+  <header class="header">
+    <div class="wordmark">PTA <em>Treasurer</em></div>
+    <nav class="nav">
+      <button class="nav-btn active" data-panel="checks" onclick="showPanel(this)">Write checks</button>
+      <button class="nav-btn" data-panel="recon" onclick="showPanel(this)">Reconcile<span class="badge-dot" id="dot-recon"></span></button>
+      <button class="nav-btn" data-panel="balances" onclick="showPanel(this)">Balances</button>
+      <button class="nav-btn" data-panel="export" onclick="showPanel(this)">Export PDF</button>
+    </nav>
+    <div class="header-right">
+      <div class="user-pill" id="user-pill">
+        <div class="user-avatar" id="user-avatar"></div>
+        <span id="user-name"></span>
+      </div>
+      <button class="btn sm" onclick="signOut()">Sign out</button>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- ─── CHECKS PANEL ─── -->
+    <div id="panel-checks" class="panel active">
+      <div class="section-head">
+        <h1>Write a check</h1>
+        <p>Adds a row to both the Receipts sheet and the selected budget tab.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Check details</div>
+        <div class="grid-4">
+          <div class="field">
+            <label for="ck-num">Check #</label>
+            <input type="number" id="ck-num" class="mono" placeholder="1561" tabindex="1" />
+          </div>
+          <div class="field">
+            <label for="ck-date-recv">Date received</label>
+            <input type="date" id="ck-date-recv" tabindex="2" />
+          </div>
+          <div class="field">
+            <label for="ck-date-reimb">Date reimbursed</label>
+            <input type="date" id="ck-date-reimb" tabindex="3" />
+          </div>
+          <div class="field amount-wrap">
+            <label for="ck-amount">Amount</label>
+            <input type="number" id="ck-amount" placeholder="0.00" step="0.01" min="0" tabindex="4" />
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-top:14px">
+          <div class="field">
+            <label for="ck-requestor">Requestor / teacher</label>
+            <input type="text" id="ck-requestor" placeholder="Kathleen Gillespie" tabindex="5" />
+          </div>
+          <div class="field">
+            <label for="ck-payee">Paid to</label>
+            <input type="text" id="ck-payee" placeholder="Follett Content Solutions" tabindex="6" />
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-top:14px">
+          <div class="field autocomplete">
+            <label for="ck-budget-input">Budget line item</label>
+            <input type="text" id="ck-budget-input" placeholder="Type account # or name…"
+              autocomplete="off" tabindex="7"
+              oninput="filterBudget()"
+              onkeydown="acKeydown(event)"
+              onfocus="if(this.value)filterBudget()"
+              onblur="setTimeout(closeAc,160)" />
+            <input type="hidden" id="ck-budget-code" />
+            <div class="autocomplete-list" id="ac-list"></div>
+          </div>
+          <div class="field">
+            <label for="ck-item">Item description</label>
+            <input type="text" id="ck-item" placeholder="Library books and supplies" tabindex="8" />
+          </div>
+        </div>
+
+        <div style="margin-top:18px">
+          <div class="card-label" style="margin-bottom:10px">Post to tab</div>
+          <div class="tab-picker" id="check-tab-picker">
+            <span style="font-size:13px;color:var(--ink3)">Sign in and connect to load tabs…</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Receipt</div>
+        <div class="file-drop" id="receipt-drop"
+          onclick="document.getElementById('receipt-file').click()"
+          ondragover="event.preventDefault();this.classList.add('dragover')"
+          ondragleave="this.classList.remove('dragover')"
+          ondrop="handleReceiptDrop(event)">
+          <div class="icon">📎</div>
+          <div>Drop receipt file here, or click to browse</div>
+          <div style="font-size:12px;margin-top:4px;opacity:0.7">The filename will be generated from the payee, date, and check number automatically.</div>
+        </div>
+        <input type="file" id="receipt-file" style="display:none" onchange="handleReceiptFile(event)" tabindex="9" />
+        <div id="receipt-preview" style="margin-top:10px;display:none"></div>
+        <input type="hidden" id="ck-receipt-name" />
+        <input type="hidden" id="ck-receipt-url" />
+      </div>
+
+      <div class="btn-row">
+        <button class="btn accent" onclick="submitCheck()" id="btn-submit" tabindex="10">Add check to both sheets</button>
+        <button class="btn" onclick="clearCheckForm()" tabindex="11">Clear</button>
+        <span class="status-msg" id="check-status"></span>
+      </div>
+
+      <div id="recent-card" class="card" style="display:none;margin-top:24px">
+        <div class="card-label">Added this session</div>
+        <div class="recent-list" id="recent-list"></div>
+      </div>
+    </div>
+
+    <!-- ─── RECONCILE PANEL ─── -->
+    <div id="panel-recon" class="panel">
+      <div class="section-head">
+        <h1>Reconcile</h1>
+        <p>Match bank statement withdrawals against pending checks, then move them to a monthly tab.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Bank statement</div>
+        <p style="font-size:13.5px;color:var(--ink3);margin-bottom:16px">Upload a CSV export from your bank, or paste rows below. Format: <span style="font-family:var(--mono);font-size:12px">date, amount, description</span></p>
+        <div class="file-drop" id="stmt-drop"
+          onclick="document.getElementById('stmt-file').click()"
+          ondragover="event.preventDefault();this.classList.add('dragover')"
+          ondragleave="this.classList.remove('dragover')"
+          ondrop="handleStmtDrop(event)">
+          <div class="icon">🏦</div>
+          Drop CSV bank statement here, or click to browse
+        </div>
+        <input type="file" id="stmt-file" accept=".csv" style="display:none" onchange="handleStmtFile(event)" />
+        <div class="field" style="margin-top:12px">
+          <label>Or paste CSV rows</label>
+          <textarea id="recon-paste" rows="4" placeholder="05/08/26,-500.00,Annalisa Moore&#10;05/08/26,-600.00,Paula Gutierrez Valero"></textarea>
+        </div>
+        <div class="btn-row">
+          <button class="btn accent" onclick="runReconcile()" id="btn-recon">Match against pending checks</button>
+          <span class="status-msg" id="recon-status"></span>
+        </div>
+      </div>
+
+      <div id="recon-results" style="display:none">
+        <div class="card">
+          <div class="card-label">Matched — will be cleared and moved</div>
+          <div id="matched-body"><div class="empty">No matches yet.</div></div>
+        </div>
+        <div class="card">
+          <div class="card-label">Unmatched statement rows</div>
+          <div id="unmatched-body"><div class="empty">None.</div></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn accent" onclick="commitReconcile()" id="btn-commit">Commit matches</button>
+          <div class="field" style="margin:0">
+            <select id="recon-target-tab" style="width:auto">
+              <option value="">Select month tab…</option>
+            </select>
+          </div>
+          <span class="status-msg" id="commit-status"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── BALANCES PANEL ─── -->
+    <div id="panel-balances" class="panel">
+      <div class="section-head">
+        <h1>Monthly balances</h1>
+        <p>Write beginning and end-of-month balances to the Annual summary sheet.</p>
+      </div>
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+          <div class="field" style="max-width:200px">
+            <label>Month being closed</label>
+            <select id="bal-tab"></select>
+          </div>
+        </div>
+        <div class="balance-grid">
+          <div class="balance-card">
+            <h3>Verity Checking</h3>
+            <div class="field">
+              <label>Beginning of month</label>
+              <div class="amount-wrap"><input type="number" id="bal-chk-bom" step="0.01" placeholder="0.00" tabindex="20" /></div>
+            </div>
+            <div class="field">
+              <label>End of month</label>
+              <div class="amount-wrap"><input type="number" id="bal-chk-eom" step="0.01" placeholder="0.00" tabindex="21" /></div>
+            </div>
+          </div>
+          <div class="balance-card">
+            <h3>Verity Savings</h3>
+            <div class="field">
+              <label>Beginning of month</label>
+              <div class="amount-wrap"><input type="number" id="bal-sav-bom" step="0.01" placeholder="0.00" tabindex="22" /></div>
+            </div>
+            <div class="field">
+              <label>End of month</label>
+              <div class="amount-wrap"><input type="number" id="bal-sav-eom" step="0.01" placeholder="0.00" tabindex="23" /></div>
+            </div>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn accent" onclick="submitBalances()" id="btn-balances" tabindex="24">Write to budget sheet</button>
+          <span class="status-msg" id="bal-status"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── EXPORT PANEL ─── -->
+    <div id="panel-export" class="panel">
+      <div class="section-head">
+        <h1>Export budget PDF</h1>
+        <p>Choose columns, generate a PDF, and save it to the Drive receipts folder.</p>
+      </div>
+      <div class="card">
+        <div class="card-label">Columns to include</div>
+        <div class="col-list">
+          <label class="col-item"><input type="checkbox" checked data-col="A"> Account No</label>
+          <label class="col-item"><input type="checkbox" checked data-col="B"> Account Title</label>
+          <label class="col-item"><input type="checkbox" checked data-col-current> Current month</label>
+          <label class="col-item"><input type="checkbox" checked data-col="O"> Pending checks</label>
+          <label class="col-item"><input type="checkbox" checked data-col="P"> 2025-2026 Budget</label>
+          <label class="col-item"><input type="checkbox" checked data-col="Q"> YTD</label>
+          <label class="col-item"><input type="checkbox" checked data-col="R"> Variance</label>
+          <label class="col-item"><input type="checkbox" data-col="S"> Notes</label>
+        </div>
+        <hr class="sep">
+        <div class="grid-2">
+          <div class="field">
+            <label>Month tab to pull data from</label>
+            <select id="export-tab"></select>
+          </div>
+          <div class="field">
+            <label>Export filename</label>
+            <input type="text" id="export-filename" placeholder="2026-05 Budget Report.pdf" />
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn accent" onclick="exportBudget()" id="btn-export">Generate &amp; upload to Drive</button>
+          <span class="status-msg" id="export-status"></span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────
+// CONFIG — edit these two values
+// ─────────────────────────────────────────
+const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID_HERE';
+const BUDGET_SHEET_ID  = '1x6HmaCEN2KqBT6pwj4xLHxOcKJfNHHKUCloWyIN72GQ';
+const RECEIPTS_SHEET_ID = '1P0kgUbo5uDuG7C0EUNRTPxraQo9FAx53wvm9cMESzpA';
+const DRIVE_FOLDER_ID  = '1AokY0bNh_N0dhH5b5Qe2kBmHG2Jvyz6M';
+const RECEIPTS_TAB     = 'Receipts';
+
+const SCOPES = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive openid profile email';
+
+// Month tab → Annual column mapping
+const MONTH_COLS = {
+  'July':'C','Aug':'D','Sept':'E','Oct':'F','Nov':'G',
+  'Dec':'H','Jan':'I','Feb':'J','March':'K','April':'L','May':'M'
+};
+
+// ─────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────
+let accessToken = null;
+let budgetLineItems = [];
+let sheetTabs = [];       // [{title, id}] from budget sheet
+let pendingChecks = [];   // rows from Receipts tab that aren't cleared
+let selectedCheckTab = 'Pending';
+let reconMatches = [];
+let sessionChecks = [];
+let acFocusIdx = -1;
+
+// ─────────────────────────────────────────
+// GOOGLE SIGN IN
+// ─────────────────────────────────────────
+function initGoogleAuth() {
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleIdToken,
+    auto_select: false,
+  });
+
+  google.accounts.id.renderButton(
+    document.getElementById('g-signin-btn'),
+    { theme: 'outline', size: 'large', shape: 'rectangular', text: 'signin_with', width: 280 }
+  );
+
+  // Try silent sign-in
+  requestAccessToken(true);
+}
+
+let tokenClient;
+function requestAccessToken(silent = false) {
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: SCOPES,
+    callback: handleToken,
+    prompt: silent ? 'none' : '',
+    error_callback: (e) => {
+      if (!silent) showSignIn();
+    }
+  });
+  tokenClient.requestAccessToken({ prompt: silent ? 'none' : '' });
+}
+
+function handleIdToken(response) {
+  // After Google One Tap, still need an access token for APIs
+  requestAccessToken(false);
+}
+
+function handleToken(response) {
+  if (response.error) { showSignIn(); return; }
+  accessToken = response.access_token;
+
+  // Parse user info from token
+  const payload = parseJwt(response.id_token || '');
+  showApp(payload);
+  loadSheetData();
+
+  // Schedule refresh 5 min before expiry (tokens last 1h)
+  setTimeout(() => requestAccessToken(true), (response.expires_in - 300) * 1000);
+}
+
+function parseJwt(token) {
+  try {
+    return JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+  } catch { return {}; }
+}
+
+function showSignIn() {
+  document.getElementById('signin-page').style.display = '';
+  document.getElementById('app').style.display = 'none';
+}
+
+function showApp(user) {
+  document.getElementById('signin-page').style.display = 'none';
+  document.getElementById('app').style.display = '';
+  if (user) {
+    document.getElementById('user-name').textContent = (user.given_name || user.name || '').split(' ')[0];
+    const av = document.getElementById('user-avatar');
+    if (user.picture) {
+      av.innerHTML = `<img src="${user.picture}" alt="">`;
+    } else {
+      av.textContent = (user.given_name || user.name || 'U')[0].toUpperCase();
+    }
+  }
+}
+
+function signOut() {
+  google.accounts.id.disableAutoSelect();
+  if (accessToken) google.accounts.oauth2.revoke(accessToken, () => {});
+  accessToken = null;
+  showSignIn();
+}
+
+// ─────────────────────────────────────────
+// SHEET DATA LOADING
+// ─────────────────────────────────────────
+async function loadSheetData() {
+  try {
+    const [budgetMeta] = await Promise.all([getSheetMeta(BUDGET_SHEET_ID)]);
+    sheetTabs = budgetMeta.sheets.map(s => ({ title: s.properties.title, id: s.properties.sheetId }));
+    await Promise.all([loadBudgetLineItems(), loadPendingChecks()]);
+    populatePickers();
+  } catch(e) {
+    toast('Failed to load sheet data: ' + e.message, 'err');
+  }
+}
+
+async function loadBudgetLineItems() {
+  const data = await sheetsGet(BUDGET_SHEET_ID, 'Annual!A2:B200');
+  budgetLineItems = (data.values || [])
+    .filter(r => r[0] && r[1] && /^\d{4,}/.test(r[0].trim()))
+    .map(r => ({ code: r[0].trim(), label: r[1].trim() }));
+}
+
+async function loadPendingChecks() {
+  const data = await sheetsGet(RECEIPTS_SHEET_ID, RECEIPTS_TAB + '!A2:J500');
+  pendingChecks = (data.values || [])
+    .map((r, i) => ({
+      sheetRow: i + 2,
+      checkNo: (r[0] || '').trim(),
+      cleared: (r[1] || '').trim(),
+      requestor: r[2] || '',
+      payee: r[3] || '',
+      dateRecv: r[4] || '',
+      dateReimb: r[5] || '',
+      amount: r[6] || '',
+      budgetCode: r[7] || '',
+      item: r[8] || '',
+      receipt: r[9] || ''
+    }))
+    .filter(r => r.checkNo && !r.cleared);
+
+  const dot = document.getElementById('dot-recon');
+  if (dot) dot.classList.toggle('show', pendingChecks.length > 0);
+}
+
+function populatePickers() {
+  const monthOrder = ['July','Aug','Sept','Oct','Nov','Dec','Jan','Feb','March','April','May','Pending','June'];
+  const monthTabs = sheetTabs.filter(t => monthOrder.includes(t.title))
+    .sort((a,b) => monthOrder.indexOf(a.title) - monthOrder.indexOf(b.title));
+
+  // Check tab picker
+  const picker = document.getElementById('check-tab-picker');
+  picker.innerHTML = '';
+  monthTabs.forEach(t => {
+    const chip = document.createElement('button');
+    chip.className = 'tab-chip' + (t.title === 'Pending' ? ' active' : '');
+    chip.type = 'button';
+    chip.textContent = t.title;
+    chip.onclick = () => {
+      picker.querySelectorAll('.tab-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      selectedCheckTab = t.title;
+    };
+    picker.appendChild(chip);
+    if (t.title === 'Pending') selectedCheckTab = 'Pending';
+  });
+
+  // Reconcile target select
+  const reconSel = document.getElementById('recon-target-tab');
+  reconSel.innerHTML = '<option value="">Select month tab…</option>';
+  monthTabs.filter(t => t.title !== 'Pending').forEach(t => {
+    reconSel.insertAdjacentHTML('beforeend', `<option value="${t.title}">${t.title}</option>`);
+  });
+
+  // Balance & export month selects
+  ['bal-tab','export-tab'].forEach(id => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = '';
+    monthTabs.filter(t => t.title !== 'Pending').forEach(t => {
+      sel.insertAdjacentHTML('beforeend', `<option value="${t.title}">${t.title}</option>`);
+    });
+  });
+
+  // Pre-select current month
+  const now = new Date();
+  const monthNames = ['Jan','Feb','March','April','May','June','July','Aug','Sept','Oct','Nov','Dec'];
+  const currentMonth = monthNames[now.getMonth()];
+  ['bal-tab','export-tab'].forEach(id => {
+    const sel = document.getElementById(id);
+    const opt = [...sel.options].find(o => o.value === currentMonth);
+    if (opt) sel.value = currentMonth;
+  });
+}
+
+// ─────────────────────────────────────────
+// AUTOCOMPLETE
+// ─────────────────────────────────────────
+function filterBudget() {
+  const q = document.getElementById('ck-budget-input').value.toLowerCase().trim();
+  const list = document.getElementById('ac-list');
+  acFocusIdx = -1;
+  if (!q || !budgetLineItems.length) { list.classList.remove('open'); return; }
+
+  const matches = budgetLineItems.filter(i =>
+    i.code.startsWith(q) || i.label.toLowerCase().includes(q)
+  ).slice(0, 20);
+
+  if (!matches.length) { list.classList.remove('open'); return; }
+
+  list.innerHTML = matches.map((i, idx) =>
+    `<div class="ac-item" data-idx="${idx}" data-code="${i.code}" data-label="${i.label.replace(/"/g,'&quot;')}"
+      onmousedown="selectBudget('${i.code}','${i.label.replace(/'/g,'\\\'')}')">`+
+      `<span class="ac-code">${i.code}</span><span class="ac-label">${i.label}</span></div>`
+  ).join('');
+  list.classList.add('open');
+}
+
+function acKeydown(e) {
+  const list = document.getElementById('ac-list');
+  const items = list.querySelectorAll('.ac-item');
+  if (!list.classList.contains('open')) return;
+  if (e.key === 'ArrowDown') { e.preventDefault(); acFocusIdx = Math.min(acFocusIdx+1, items.length-1); highlightAc(items); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); acFocusIdx = Math.max(acFocusIdx-1, 0); highlightAc(items); }
+  else if (e.key === 'Enter' && acFocusIdx >= 0) {
+    e.preventDefault();
+    const it = items[acFocusIdx];
+    selectBudget(it.dataset.code, it.dataset.label);
+  } else if (e.key === 'Tab' && acFocusIdx >= 0) {
+    const it = items[acFocusIdx];
+    selectBudget(it.dataset.code, it.dataset.label);
+  } else if (e.key === 'Escape') { closeAc(); }
+}
+
+function highlightAc(items) {
+  items.forEach((el, i) => el.classList.toggle('focused', i === acFocusIdx));
+  if (acFocusIdx >= 0) items[acFocusIdx].scrollIntoView({ block: 'nearest' });
+}
+
+function selectBudget(code, label) {
+  document.getElementById('ck-budget-input').value = code + ' — ' + label;
+  document.getElementById('ck-budget-code').value = code;
+  closeAc();
+  document.getElementById('ck-item').focus();
+}
+
+function closeAc() { document.getElementById('ac-list').classList.remove('open'); acFocusIdx = -1; }
+
+// ─────────────────────────────────────────
+// RECEIPT UPLOAD
+// ─────────────────────────────────────────
+function handleReceiptDrop(e) {
+  e.preventDefault();
+  document.getElementById('receipt-drop').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) processReceipt(file);
+}
+function handleReceiptFile(e) { if (e.target.files[0]) processReceipt(e.target.files[0]); }
+
+async function processReceipt(file) {
+  const drop = document.getElementById('receipt-drop');
+  drop.innerHTML = '<div class="icon" style="font-size:20px">⏳</div><div>Uploading to Drive…</div>';
+
+  try {
+    const generatedName = generateReceiptName(file);
+    const driveUrl = await uploadToDrive(file, generatedName);
+
+    document.getElementById('ck-receipt-name').value = generatedName;
+    document.getElementById('ck-receipt-url').value = driveUrl;
+
+    drop.className = 'file-drop has-file';
+    drop.innerHTML = `<div style="font-size:20px;margin-bottom:6px">✓</div>
+      <div class="file-name">${generatedName}</div>
+      <div style="font-size:12px;margin-top:4px"><a href="${driveUrl}" target="_blank" onclick="event.stopPropagation()">Open in Drive ↗</a></div>`;
+
+    toast('Receipt uploaded: ' + generatedName, 'ok');
+  } catch(e) {
+    drop.className = 'file-drop';
+    drop.innerHTML = '<div class="icon">📎</div><div>Drop receipt file here, or click to browse</div>';
+    toast('Upload failed: ' + e.message, 'err');
+  }
+}
+
+function generateReceiptName(file) {
+  const dateReimb = document.getElementById('ck-date-reimb').value;
+  const payee = document.getElementById('ck-payee').value.trim();
+  const checkNo = document.getElementById('ck-num').value.trim();
+
+  const ext = file.name.split('.').pop().toLowerCase();
+
+  let datePart = 'YYYY.MM';
+  if (dateReimb) {
+    const [y, m] = dateReimb.split('-');
+    datePart = `${y}.${m}`;
+  }
+
+  let namePart = 'Receipt';
+  if (payee) {
+    // Use last name or first word of org name
+    const words = payee.trim().split(/\s+/);
+    namePart = words.length >= 2 ? words[words.length - 1] : words[0];
+    // Remove punctuation
+    namePart = namePart.replace(/[^a-zA-Z0-9]/g, '');
+  }
+
+  // Determine increment: look at existing receipt name to see if 01 is already taken
+  // For new uploads we start at 01; user can rename if multiple receipts for same check
+  return `${datePart} ${namePart} 01.${ext}`;
+}
+
+async function uploadToDrive(file, filename) {
+  const metadata = { name: filename, parents: [DRIVE_FOLDER_ID] };
+  const form = new FormData();
+  form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+  form.append('file', file);
+
+  const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + accessToken },
+    body: form
+  });
+  if (!res.ok) throw new Error((await res.json()).error?.message || res.statusText);
+  const data = await res.json();
+  return data.webViewLink;
+}
+
+// ─────────────────────────────────────────
+// SUBMIT CHECK
+// ─────────────────────────────────────────
+async function submitCheck() {
+  const num       = document.getElementById('ck-num').value.trim();
+  const dateRecv  = document.getElementById('ck-date-recv').value;
+  const dateReimb = document.getElementById('ck-date-reimb').value;
+  const requestor = document.getElementById('ck-requestor').value.trim();
+  const payee     = document.getElementById('ck-payee').value.trim();
+  const budgetCode= document.getElementById('ck-budget-code').value.trim();
+  const amount    = document.getElementById('ck-amount').value.trim();
+  const item      = document.getElementById('ck-item').value.trim();
+  const receiptName = document.getElementById('ck-receipt-name').value;
+  const receiptUrl  = document.getElementById('ck-receipt-url').value;
+
+  if (!num || !payee || !budgetCode || !amount) {
+    setStatus('check-status', 'Check #, payee, budget line, and amount are required.', 'err'); return;
+  }
+  if (!accessToken) { setStatus('check-status', 'Not signed in.', 'err'); return; }
+
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  setStatus('check-status', 'Writing…', 'info');
+
+  try {
+    const fmtDate = d => {
+      if (!d) return '';
+      const [y,m,day] = d.split('-');
+      return `${m}/${day}/${y}`;
+    };
+
+    const receiptCell = receiptUrl
+      ? `=HYPERLINK("${receiptUrl}","${receiptName || 'receipt'}")`
+      : (receiptName || '');
+
+    // Receipts sheet row: A-J
+    const receiptsRow = [
+      num, '', requestor, payee,
+      fmtDate(dateRecv), fmtDate(dateReimb),
+      parseFloat(amount), budgetCode, item, receiptCell
+    ];
+    await sheetsAppend(RECEIPTS_SHEET_ID, RECEIPTS_TAB + '!A:J', [receiptsRow]);
+
+    // Budget tab row: Check#, Date Posted (blank), Date Issued, Type, Budget Line, Amount, Paid To, Detail, Notes
+    const budgetRow = [
+      num, '', fmtDate(dateReimb), 'Withd.',
+      budgetCode, parseFloat(amount), payee, item, ''
+    ];
+    await sheetsAppend(BUDGET_SHEET_ID, selectedCheckTab + '!A:I', [budgetRow]);
+
+    // Session log
+    sessionChecks.unshift({ num, payee, amount, tab: selectedCheckTab });
+    renderRecentChecks();
+    document.getElementById('recent-card').style.display = '';
+
+    setStatus('check-status', `✓ Added to ${RECEIPTS_TAB} and ${selectedCheckTab}`, 'ok');
+    toast(`Check #${num} written`, 'ok');
+
+    await loadPendingChecks();
+    clearCheckForm();
+  } catch(e) {
+    setStatus('check-status', 'Error: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function clearCheckForm() {
+  ['ck-num','ck-date-recv','ck-amount','ck-requestor','ck-payee',
+   'ck-budget-input','ck-budget-code','ck-item','ck-receipt-name','ck-receipt-url'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('ck-date-reimb').value = today;
+
+  const drop = document.getElementById('receipt-drop');
+  drop.className = 'file-drop';
+  drop.innerHTML = `<div class="icon">📎</div>
+    <div>Drop receipt file here, or click to browse</div>
+    <div style="font-size:12px;margin-top:4px;opacity:0.7">The filename will be generated from the payee, date, and check number automatically.</div>`;
+
+  setStatus('check-status', '');
+  document.getElementById('ck-num').focus();
+}
+
+function renderRecentChecks() {
+  document.getElementById('recent-list').innerHTML = sessionChecks.slice(0,10).map(c =>
+    `<div class="recent-row">
+      <span class="ck">#${c.num}</span>
+      <span>${c.payee}</span>
+      <span style="color:var(--ink3);font-size:13px">${c.tab}</span>
+      <span class="amt">$${parseFloat(c.amount).toFixed(2)}</span>
+    </div>`
+  ).join('');
+}
+
+// ─────────────────────────────────────────
+// RECONCILE
+// ─────────────────────────────────────────
+function handleStmtDrop(e) {
+  e.preventDefault();
+  document.getElementById('stmt-drop').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) loadStmtFile(file);
+}
+function handleStmtFile(e) { if (e.target.files[0]) loadStmtFile(e.target.files[0]); }
+function loadStmtFile(file) {
+  const drop = document.getElementById('stmt-drop');
+  drop.className = 'file-drop has-file';
+  drop.innerHTML = `<div style="font-size:20px;margin-bottom:4px">✓</div><div class="file-name">${file.name}</div>`;
+  const reader = new FileReader();
+  reader.onload = ev => { document.getElementById('recon-paste').value = ev.target.result; };
+  reader.readAsText(file);
+}
+
+function parseStatement(text) {
+  return text.trim().split('\n')
+    .map(l => l.trim()).filter(l => l)
+    .map(line => {
+      // Try to parse flexible CSV
+      const parts = line.split(',');
+      const date = (parts[0] || '').trim().replace(/^["']|["']$/g,'');
+      const rawAmt = (parts[1] || '').trim().replace(/[$,"']/g,'');
+      const amount = parseFloat(rawAmt);
+      const desc = parts.slice(2).join(',').replace(/^["']|["']$/g,'').trim();
+      return { date, amount, desc };
+    })
+    .filter(r => !isNaN(r.amount));
+}
+
+async function runReconcile() {
+  if (!accessToken) { setStatus('recon-status','Not signed in.','err'); return; }
+  const text = document.getElementById('recon-paste').value;
+  if (!text.trim()) { setStatus('recon-status','No statement data.','err'); return; }
+
+  setStatus('recon-status', 'Loading pending checks…', 'info');
+  await loadPendingChecks();
+
+  const rows = parseStatement(text);
+  const withdrawals = rows.filter(r => r.amount < 0);
+
+  reconMatches = [];
+  const used = new Set();
+
+  withdrawals.forEach(wd => {
+    const wdAmt = Math.abs(wd.amount);
+    const match = pendingChecks.find((c, i) => {
+      if (used.has(i)) return false;
+      const cAmt = parseFloat(c.amount.replace(/[$,]/g,''));
+      return Math.abs(cAmt - wdAmt) < 0.02;
+    });
+    if (match) {
+      used.add(pendingChecks.indexOf(match));
+      reconMatches.push({ stmt: wd, check: match, matched: true });
+    } else {
+      reconMatches.push({ stmt: wd, check: null, matched: false });
+    }
+  });
+
+  renderReconResults();
+  const n = reconMatches.filter(r=>r.matched).length;
+  setStatus('recon-status', `${n} matched, ${reconMatches.filter(r=>!r.matched).length} unmatched`, n > 0 ? 'ok' : 'info');
+  document.getElementById('recon-results').style.display = '';
+}
+
+function renderReconResults() {
+  const fmtAmt = a => '$' + Math.abs(a).toFixed(2);
+  const matched = reconMatches.filter(r => r.matched);
+  const unmatched = reconMatches.filter(r => !r.matched);
+
+  const matchedHtml = matched.length ? `
+    <table class="recon-table">
+      <thead><tr><th>Date</th><th>Amount</th><th>Check #</th><th>Payee</th><th>Budget</th><th></th></tr></thead>
+      <tbody>${matched.map(m => `<tr class="matched">
+        <td>${m.stmt.date}</td>
+        <td style="font-family:var(--mono)">${fmtAmt(m.stmt.amount)}</td>
+        <td style="font-family:var(--mono)">#${m.check.checkNo}</td>
+        <td>${m.check.payee}</td>
+        <td style="font-family:var(--mono);font-size:12px">${m.check.budgetCode}</td>
+        <td><span class="pill match">✓ Match</span></td>
+      </tr>`).join('')}</tbody>
+    </table>` : '<div class="empty">No matches found.</div>';
+
+  const unmatchedHtml = unmatched.length ? `
+    <table class="recon-table">
+      <thead><tr><th>Date</th><th>Amount</th><th>Description</th><th></th></tr></thead>
+      <tbody>${unmatched.map(u => `<tr>
+        <td>${u.stmt.date}</td>
+        <td style="font-family:var(--mono)">${fmtAmt(u.stmt.amount)}</td>
+        <td style="color:var(--ink3)">${u.stmt.desc}</td>
+        <td><span class="pill nomatch">No match</span></td>
+      </tr>`).join('')}</tbody>
+    </table>` : '<div class="empty" style="padding:12px">All withdrawals matched.</div>';
+
+  document.getElementById('matched-body').innerHTML = matchedHtml;
+  document.getElementById('unmatched-body').innerHTML = unmatchedHtml;
+}
+
+async function commitReconcile() {
+  const targetTab = document.getElementById('recon-target-tab').value;
+  if (!targetTab) { setStatus('commit-status','Select a target month tab.','err'); return; }
+  const toProcess = reconMatches.filter(r => r.matched);
+  if (!toProcess.length) { setStatus('commit-status','No matched rows to commit.','err'); return; }
+
+  document.getElementById('btn-commit').disabled = true;
+  setStatus('commit-status', 'Committing…', 'info');
+
+  let done = 0;
+  const errors = [];
+
+  // Process in reverse order so row deletions don't shift indices
+  const sorted = [...toProcess].sort((a,b) => b.check.sheetRow - a.check.sheetRow);
+
+  for (const m of sorted) {
+    try {
+      const c = m.check;
+
+      // 1. Append to target month tab in budget sheet
+      const budgetRow = [c.checkNo, '', c.dateReimb, 'Withd.', c.budgetCode, c.amount, c.payee, c.item, ''];
+      await sheetsAppend(BUDGET_SHEET_ID, targetTab + '!A:I', [budgetRow]);
+
+      // 2. Find and delete from Pending tab in budget sheet
+      const pendingTab = sheetTabs.find(t => t.title.toLowerCase() === 'pending');
+      if (pendingTab) {
+        const pendData = await sheetsGet(BUDGET_SHEET_ID, 'Pending!A:A');
+        const pendRows = pendData.values || [];
+        const pendIdx = pendRows.findIndex((r, i) => i > 0 && r[0] == c.checkNo);
+        if (pendIdx >= 0) {
+          await batchDeleteRow(BUDGET_SHEET_ID, pendingTab.id, pendIdx);
+        }
+      }
+
+      // 3. Mark cleared in Receipts sheet
+      await sheetsUpdate(RECEIPTS_SHEET_ID, `${RECEIPTS_TAB}!B${c.sheetRow}`, [['✓']]);
+
+      done++;
+    } catch(e) {
+      errors.push(`#${m.check.checkNo}: ${e.message}`);
+    }
+  }
+
+  document.getElementById('btn-commit').disabled = false;
+  await loadPendingChecks();
+
+  if (errors.length) {
+    setStatus('commit-status', `${done} committed. Errors: ${errors.join('; ')}`, 'err');
+  } else {
+    setStatus('commit-status', `✓ ${done} checks cleared and moved to ${targetTab}`, 'ok');
+    toast(`${done} checks reconciled`, 'ok');
+    reconMatches = [];
+    document.getElementById('recon-results').style.display = 'none';
+    document.getElementById('recon-paste').value = '';
+  }
+}
+
+// ─────────────────────────────────────────
+// BALANCES
+// ─────────────────────────────────────────
+async function submitBalances() {
+  const tab    = document.getElementById('bal-tab').value;
+  const chkBom = document.getElementById('bal-chk-bom').value;
+  const chkEom = document.getElementById('bal-chk-eom').value;
+  const savBom = document.getElementById('bal-sav-bom').value;
+  const savEom = document.getElementById('bal-sav-eom').value;
+
+  if (!tab || !chkBom || !chkEom || !savBom || !savEom) {
+    setStatus('bal-status','Fill in all four balance fields.','err'); return;
+  }
+
+  const col = MONTH_COLS[tab];
+  if (!col) { setStatus('bal-status', `No column mapping for tab "${tab}".`, 'err'); return; }
+
+  document.getElementById('btn-balances').disabled = true;
+  setStatus('bal-status','Writing…','info');
+
+  try {
+    await Promise.all([
+      sheetsUpdate(BUDGET_SHEET_ID, `Annual!${col}3`, [[parseFloat(chkBom)]]),
+      sheetsUpdate(BUDGET_SHEET_ID, `Annual!${col}4`, [[parseFloat(chkEom)]]),
+      sheetsUpdate(BUDGET_SHEET_ID, `Annual!${col}7`, [[parseFloat(savBom)]]),
+      sheetsUpdate(BUDGET_SHEET_ID, `Annual!${col}8`, [[parseFloat(savEom)]]),
+    ]);
+    setStatus('bal-status', `✓ Written to Annual column ${col} (${tab})`, 'ok');
+    toast('Balances saved', 'ok');
+  } catch(e) {
+    setStatus('bal-status', 'Error: ' + e.message, 'err');
+  } finally {
+    document.getElementById('btn-balances').disabled = false;
+  }
+}
+
+// ─────────────────────────────────────────
+// EXPORT
+// ─────────────────────────────────────────
+async function exportBudget() {
+  const tab      = document.getElementById('export-tab').value;
+  const filename = document.getElementById('export-filename').value.trim()
+    || `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')} Budget Report`;
+
+  if (!accessToken) { setStatus('export-status','Not signed in.','err'); return; }
+  if (!tab) { setStatus('export-status','Select a month tab.','err'); return; }
+
+  document.getElementById('btn-export').disabled = true;
+  setStatus('export-status','Fetching data…','info');
+
+  try {
+    const data = await sheetsGet(BUDGET_SHEET_ID, 'Annual!A1:S120');
+    const allRows = data.values || [];
+
+    const wantCols = [];
+    document.querySelectorAll('#panel-export input[type=checkbox]').forEach(cb => {
+      if (!cb.checked) return;
+      if (cb.dataset.col) wantCols.push(cb.dataset.col.charCodeAt(0) - 65);
+      else if ('colCurrent' in cb.dataset) {
+        const col = MONTH_COLS[tab];
+        if (col) wantCols.push(col.charCodeAt(0) - 65);
+      }
+    });
+
+    const filtered = allRows.map(row => wantCols.map(i => row[i] || ''));
+    const html = buildExportHtml(filtered, tab, filename);
+    const blob = new Blob([html], { type: 'text/html' });
+
+    setStatus('export-status','Uploading to Drive…','info');
+
+    const fnPdf = filename.endsWith('.pdf') ? filename : filename + '.pdf';
+    const meta = JSON.stringify({ name: fnPdf, parents: [DRIVE_FOLDER_ID], mimeType: 'application/vnd.google-apps.document' });
+    const form = new FormData();
+    form.append('metadata', new Blob([meta], { type: 'application/json' }));
+    form.append('file', blob);
+
+    const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + accessToken },
+      body: form
+    });
+    const result = await res.json();
+    if (result.id) {
+      setStatus('export-status', '✓ Uploaded to Drive', 'ok');
+      toast('Budget exported to Drive', 'ok');
+      // Add open link
+      const span = document.getElementById('export-status');
+      span.innerHTML += ` — <a href="${result.webViewLink}" target="_blank" style="color:var(--accent)">Open ↗</a>`;
+    } else {
+      throw new Error(result.error?.message || 'Upload failed');
+    }
+  } catch(e) {
+    setStatus('export-status', 'Error: ' + e.message, 'err');
+  } finally {
+    document.getElementById('btn-export').disabled = false;
+  }
+}
+
+function buildExportHtml(rows, tab, title) {
+  const table = rows.map((r, i) =>
+    `<tr>${r.map(c => `<${i===0?'th':'td'}>${escHtml(c)}</${i===0?'th':'td'}>`).join('')}</tr>`
+  ).join('');
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>
+    body { font-family: 'Arial', sans-serif; font-size: 10pt; margin: 0.75in; color: #111; }
+    h2 { font-size: 14pt; margin-bottom: 4px; font-weight: 600; }
+    p.sub { color: #666; font-size: 9pt; margin-bottom: 16px; }
+    table { border-collapse: collapse; width: 100%; }
+    th { background: #1a1a1a; color: #fff; padding: 6px 8px; text-align: left; font-size: 9pt; }
+    td { padding: 5px 8px; font-size: 9pt; border-bottom: 1px solid #eee; }
+    tr:nth-child(even) td { background: #f9f9f9; }
+    td:first-child, th:first-child { font-family: monospace; }
+  </style></head><body>
+  <h2>${escHtml(title)}</h2>
+  <p class="sub">Generated ${new Date().toLocaleDateString()} · ${tab} data</p>
+  <table><tbody>${table}</tbody></table>
+  </body></html>`;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ─────────────────────────────────────────
+// SHEETS API HELPERS
+// ─────────────────────────────────────────
+async function apiFetch(url, opts = {}) {
+  const res = await fetch(url, {
+    ...opts,
+    headers: {
+      'Authorization': 'Bearer ' + accessToken,
+      ...(opts.json ? { 'Content-Type': 'application/json' } : {}),
+      ...(opts.headers || {})
+    },
+    body: opts.json ? JSON.stringify(opts.json) : opts.body
+  });
+  if (!res.ok) {
+    let msg = res.statusText;
+    try { msg = (await res.json()).error?.message || msg; } catch {}
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+function sheetsGet(id, range) {
+  return apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${encodeURIComponent(range)}`);
+}
+
+function sheetsAppend(id, range, values) {
+  return apiFetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+    { method: 'POST', json: { values } }
+  );
+}
+
+function sheetsUpdate(id, range, values) {
+  return apiFetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
+    { method: 'PUT', json: { values } }
+  );
+}
+
+function getSheetMeta(id) {
+  return apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${id}?fields=sheets.properties`);
+}
+
+function batchDeleteRow(spreadsheetId, sheetId, rowIndex) {
+  return apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
+    method: 'POST',
+    json: {
+      requests: [{
+        deleteDimension: {
+          range: { sheetId, dimension: 'ROWS', startIndex: rowIndex, endIndex: rowIndex + 1 }
+        }
+      }]
+    }
+  });
+}
+
+// ─────────────────────────────────────────
+// UI HELPERS
+// ─────────────────────────────────────────
+function showPanel(btn) {
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-' + btn.dataset.panel).classList.add('active');
+}
+
+function setStatus(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = 'status-msg' + (type ? ' ' + type : '');
+}
+
+let toastTimer;
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (type ? ' ' + type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// ─────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────
+window.addEventListener('load', () => {
+  // Set default date
+  document.getElementById('ck-date-reimb').value = new Date().toISOString().slice(0,10);
+
+  // Wait for GIS to load
+  const checkGIS = setInterval(() => {
+    if (window.google && google.accounts) {
+      clearInterval(checkGIS);
+      initGoogleAuth();
+    }
+  }, 100);
+});
+</script>
+</body>
+</html>
