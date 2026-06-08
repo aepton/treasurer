@@ -7,19 +7,20 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="logo.png">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root {
-  --ink: #1a1a1a;
-  --ink2: #555;
-  --ink3: #999;
-  --paper: #fafaf8;
+  --ink: #1b2d52;
+  --ink2: #3d5578;
+  --ink3: #8b9199;
+  --paper: #f8fafc;
   --surface: #fff;
-  --border: #e8e6e0;
-  --border2: #d4d0c8;
-  --accent: #2563eb;
-  --accent-light: #eff6ff;
-  --accent-mid: #bfdbfe;
+  --border: #dde3ea;
+  --border2: #c5cdd8;
+  --accent: #62b91a;
+  --accent-light: #f1fae8;
+  --accent-mid: #c3e896;
   --green: #16a34a;
   --green-light: #f0fdf4;
   --amber: #d97706;
@@ -57,6 +58,7 @@ body { min-height: 100vh; display: flex; flex-direction: column; }
   letter-spacing: -0.01em;
   margin-right: 40px;
   white-space: nowrap;
+  display: flex; align-items: center; gap: 8px;
 }
 .wordmark em { font-style: italic; color: var(--accent); }
 
@@ -147,7 +149,7 @@ body { min-height: 100vh; display: flex; flex-direction: column; }
 }
 .field input:focus, .field select:focus, .field textarea:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+  box-shadow: 0 0 0 3px rgba(98,185,26,0.18);
   background: var(--surface);
 }
 .field input.mono { font-family: var(--mono); font-size: 13px; }
@@ -197,7 +199,7 @@ body { min-height: 100vh; display: flex; flex-direction: column; }
   font-family: var(--sans); transition: all 0.12s;
 }
 .tab-chip:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
-.tab-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.tab-chip.active { background: var(--accent); color: var(--ink); border-color: var(--accent); }
 
 /* ── FILE DROP ── */
 .file-drop {
@@ -234,10 +236,10 @@ body { min-height: 100vh; display: flex; flex-direction: column; }
 }
 .btn.primary:hover { background: #333; }
 .btn.accent {
-  background: var(--accent); color: #fff;
+  background: var(--accent); color: var(--ink);
   border-color: var(--accent);
 }
-.btn.accent:hover { background: #1d4ed8; }
+.btn.accent:hover { background: #52a012; }
 .btn.danger { color: var(--red); border-color: #fca5a5; }
 .btn.danger:hover { background: var(--red-light); }
 .btn.sm { padding: 5px 12px; font-size: 12.5px; }
@@ -344,7 +346,11 @@ hr.sep { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 .empty { padding: 32px; text-align: center; color: var(--ink3); font-size: 14px; }
 
 /* ── ACCENT BAR ── */
-.accentbar { height: 3px; background: linear-gradient(90deg, var(--accent) 0%, #7c3aed 100%); }
+.accentbar { height: 3px; background: linear-gradient(90deg, #1b2d52 0%, #62b91a 100%); }
+
+/* ── LOGO ── */
+.wordmark-logo { height: 30px; width: 30px; object-fit: contain; flex-shrink: 0; }
+.signin-logo { width: 88px; height: 88px; object-fit: contain; margin-bottom: 8px; }
 
 /* ── NOTIFICATION TOAST ── */
 .toast {
@@ -372,6 +378,7 @@ hr.sep { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 <!-- SIGN IN PAGE (shown before auth) -->
 <div id="signin-page" class="signin-page" style="display:none">
   <div class="signin-card">
+    <img src="logo.png" alt="" class="signin-logo">
     <h1>PTA <em>Treasurer</em></h1>
     <p>Check writing, reconciliation, and monthly reporting for your school's PTA.</p>
     <div id="g-signin-btn"></div>
@@ -383,7 +390,7 @@ hr.sep { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 <!-- MAIN APP (shown after auth) -->
 <div id="app" style="display:none">
   <header class="header">
-    <div class="wordmark">PTA <em>Treasurer</em></div>
+    <div class="wordmark"><img src="logo.png" alt="" class="wordmark-logo"> PTA <em>Treasurer</em></div>
     <nav class="nav">
       <button class="nav-btn active" data-panel="checks" onclick="showPanel(this)">Write checks</button>
       <button class="nav-btn" data-panel="recon" onclick="showPanel(this)">Reconcile<span class="badge-dot" id="dot-recon"></span></button>
@@ -702,10 +709,12 @@ function handleToken(response) {
   if (response.error) { showSignIn(); return; }
   accessToken = response.access_token;
 
-  // Parse user info from token
-  const payload = parseJwt(response.id_token || '');
-  showApp(payload);
+  showApp({});
   loadSheetData();
+
+  fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+    headers: { 'Authorization': 'Bearer ' + accessToken }
+  }).then(r => r.json()).then(user => showApp(user)).catch(() => {});
 
   // Schedule refresh 5 min before expiry (tokens last 1h)
   setTimeout(() => requestAccessToken(true), (response.expires_in - 300) * 1000);
@@ -981,8 +990,13 @@ async function submitCheck() {
   const receiptName = document.getElementById('ck-receipt-name').value;
   const receiptUrl  = document.getElementById('ck-receipt-url').value;
 
-  if (!num || !payee || !budgetCode || !amount) {
-    setStatus('check-status', 'Check #, payee, budget line, and amount are required.', 'err'); return;
+  const missing = [];
+  if (!num) missing.push('Check #');
+  if (!payee) missing.push('Paid to');
+  if (!budgetCode) missing.push('Budget line item (select from dropdown)');
+  if (!amount) missing.push('Amount');
+  if (missing.length) {
+    setStatus('check-status', 'Required: ' + missing.join(', '), 'err'); return;
   }
   if (!accessToken) { setStatus('check-status', 'Not signed in.', 'err'); return; }
 
@@ -1014,7 +1028,8 @@ async function submitCheck() {
       num, '', fmtDate(dateReimb), 'Withd.',
       budgetCode, parseFloat(amount), payee, item, ''
     ];
-    await sheetsAppend(BUDGET_SHEET_ID, selectedCheckTab + '!A:I', [budgetRow]);
+    const budgetTargetRow = await findNextCheckRow(selectedCheckTab);
+    await sheetsUpdate(BUDGET_SHEET_ID, `${selectedCheckTab}!A${budgetTargetRow}:I${budgetTargetRow}`, [budgetRow]);
 
     // Session log
     sessionChecks.unshift({ num, payee, amount, tab: selectedCheckTab });
@@ -1183,9 +1198,10 @@ async function commitReconcile() {
     try {
       const c = m.check;
 
-      // 1. Append to target month tab in budget sheet
+      // 1. Write to target month tab in budget sheet at next check row
       const budgetRow = [c.checkNo, '', c.dateReimb, 'Withd.', c.budgetCode, c.amount, c.payee, c.item, ''];
-      await sheetsAppend(BUDGET_SHEET_ID, targetTab + '!A:I', [budgetRow]);
+      const budgetTargetRow = await findNextCheckRow(targetTab);
+      await sheetsUpdate(BUDGET_SHEET_ID, `${targetTab}!A${budgetTargetRow}:I${budgetTargetRow}`, [budgetRow]);
 
       // 2. Find and delete from Pending tab in budget sheet
       const pendingTab = sheetTabs.find(t => t.title.toLowerCase() === 'pending');
@@ -1374,6 +1390,17 @@ function sheetsAppend(id, range, values) {
     `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
     { method: 'POST', json: { values } }
   );
+}
+
+async function findNextCheckRow(tabName) {
+  const data = await sheetsGet(BUDGET_SHEET_ID, `${tabName}!A:A`);
+  const rows = data.values || [];
+  for (let i = rows.length - 1; i >= 0; i--) {
+    if (rows[i] && rows[i][0] && /^\d+$/.test(rows[i][0].toString().trim())) {
+      return i + 2; // i is 0-based, +1 for 1-based, +1 for next row
+    }
+  }
+  return 2; // fallback: first data row
 }
 
 function sheetsUpdate(id, range, values) {
