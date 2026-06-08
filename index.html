@@ -674,6 +674,7 @@ let reconMatches = [];
 let sessionChecks = [];
 let acFocusIdx = -1;
 const taData = { requestorList: [], payeeList: [], itemDescList: [] };
+let userInitials = '';
 let taActiveInput = null, taActiveList = null, taActiveItems = [], taActiveIdx = -1;
 
 // ─────────────────────────────────────────
@@ -743,13 +744,14 @@ function showSignIn() {
 function showApp(user) {
   document.getElementById('signin-page').style.display = 'none';
   document.getElementById('app').style.display = '';
-  if (user) {
-    document.getElementById('user-name').textContent = (user.given_name || user.name || '').split(' ')[0];
+  if (user && user.name) {
+    userInitials = user.name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase();
+    document.getElementById('user-name').textContent = (user.given_name || user.name).split(' ')[0];
     const av = document.getElementById('user-avatar');
     if (user.picture) {
       av.innerHTML = `<img src="${user.picture}" alt="">`;
     } else {
-      av.textContent = (user.given_name || user.name || 'U')[0].toUpperCase();
+      av.textContent = userInitials[0] || 'U';
     }
   }
 }
@@ -1063,18 +1065,21 @@ async function submitCheck() {
       ? `=HYPERLINK("${receiptUrl}","${receiptName || 'receipt'}")`
       : (receiptName || '');
 
-    // Receipts sheet row: A-J
+    const enteredBy = userInitials ? 'Entered by ' + userInitials : '';
+    const detailWithInitials = item + (userInitials ? ' — ' + userInitials : '');
+
+    // Receipts sheet row: A-K
     const receiptsRow = [
       num, '', requestor, payee,
       fmtDate(dateRecv), fmtDate(dateReimb),
-      parseFloat(amount), budgetCode, item, receiptCell
+      parseFloat(amount), budgetCode, item, receiptCell, enteredBy
     ];
-    await sheetsAppend(RECEIPTS_SHEET_ID, RECEIPTS_TAB + '!A:J', [receiptsRow]);
+    await sheetsAppend(RECEIPTS_SHEET_ID, RECEIPTS_TAB + '!A:K', [receiptsRow]);
 
     // Budget tab row: Check#, Date Posted (blank), Date Issued, Type, Budget Line, Amount, Paid To, Detail, Notes
     const budgetRow = [
       num, '', fmtDate(dateReimb), 'Withd.',
-      budgetCode, parseFloat(amount), payee, item, ''
+      budgetCode, parseFloat(amount), payee, detailWithInitials, ''
     ];
     const budgetTargetRow = await findNextCheckRow(selectedCheckTab);
     await sheetsUpdate(BUDGET_SHEET_ID, `${selectedCheckTab}!A${budgetTargetRow}:I${budgetTargetRow}`, [budgetRow]);
