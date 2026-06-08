@@ -160,7 +160,8 @@ body { min-height: 100vh; display: flex; flex-direction: column; }
 .amount-wrap { position: relative; }
 .amount-wrap::before {
   content: '$'; position: absolute; left: 11px; top: 50%;
-  transform: translateY(-50%); color: var(--ink3); font-size: 14px;
+  transform: translateY(-50%);
+  color: var(--ink3); font-size: 14px;
   font-family: var(--mono); pointer-events: none;
 }
 .amount-wrap input { padding-left: 22px; }
@@ -430,20 +431,28 @@ hr.sep { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
             <label for="ck-date-reimb">Date reimbursed</label>
             <input type="date" id="ck-date-reimb" tabindex="3" />
           </div>
-          <div class="field amount-wrap">
+          <div class="field">
             <label for="ck-amount">Amount</label>
-            <input type="number" id="ck-amount" placeholder="0.00" step="0.01" min="0" tabindex="4" />
+            <div class="amount-wrap"><input type="number" id="ck-amount" placeholder="0.00" step="0.01" min="0" tabindex="4" /></div>
           </div>
         </div>
 
         <div class="grid-2" style="margin-top:14px">
-          <div class="field">
+          <div class="field autocomplete">
             <label for="ck-requestor">Requestor / teacher</label>
-            <input type="text" id="ck-requestor" placeholder="Kathleen Gillespie" tabindex="5" />
+            <input type="text" id="ck-requestor" placeholder="Kathleen Gillespie" tabindex="5"
+              autocomplete="off" data-ac="requestorList"
+              oninput="taInput(this)" onkeydown="taKey(event,this)"
+              onfocus="if(this.value)taInput(this)" onblur="taBlur(this)" />
+            <div class="autocomplete-list" id="ac-requestor"></div>
           </div>
-          <div class="field">
+          <div class="field autocomplete">
             <label for="ck-payee">Paid to</label>
-            <input type="text" id="ck-payee" placeholder="Follett Content Solutions" tabindex="6" />
+            <input type="text" id="ck-payee" placeholder="Follett Content Solutions" tabindex="6"
+              autocomplete="off" data-ac="payeeList"
+              oninput="taInput(this)" onkeydown="taKey(event,this)"
+              onfocus="if(this.value)taInput(this)" onblur="taBlur(this)" />
+            <div class="autocomplete-list" id="ac-payee"></div>
           </div>
         </div>
 
@@ -459,18 +468,16 @@ hr.sep { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
             <input type="hidden" id="ck-budget-code" />
             <div class="autocomplete-list" id="ac-list"></div>
           </div>
-          <div class="field">
+          <div class="field autocomplete">
             <label for="ck-item">Item description</label>
-            <input type="text" id="ck-item" placeholder="Library books and supplies" tabindex="8" />
+            <input type="text" id="ck-item" placeholder="Library books and supplies" tabindex="8"
+              autocomplete="off" data-ac="itemDescList"
+              oninput="taInput(this)" onkeydown="taKey(event,this)"
+              onfocus="if(this.value)taInput(this)" onblur="taBlur(this)" />
+            <div class="autocomplete-list" id="ac-item"></div>
           </div>
         </div>
 
-        <div style="margin-top:18px">
-          <div class="card-label" style="margin-bottom:10px">Post to tab</div>
-          <div class="tab-picker" id="check-tab-picker">
-            <span style="font-size:13px;color:var(--ink3)">Sign in and connect to load tabs…</span>
-          </div>
-        </div>
       </div>
 
       <div class="card">
@@ -666,6 +673,8 @@ let selectedCheckTab = 'Pending';
 let reconMatches = [];
 let sessionChecks = [];
 let acFocusIdx = -1;
+const taData = { requestorList: [], payeeList: [], itemDescList: [] };
+let taActiveInput = null, taActiveList = null, taActiveItems = [], taActiveIdx = -1;
 
 // ─────────────────────────────────────────
 // GOOGLE SIGN IN
@@ -759,7 +768,7 @@ async function loadSheetData() {
   try {
     const [budgetMeta] = await Promise.all([getSheetMeta(BUDGET_SHEET_ID)]);
     sheetTabs = budgetMeta.sheets.map(s => ({ title: s.properties.title, id: s.properties.sheetId }));
-    await Promise.all([loadBudgetLineItems(), loadPendingChecks()]);
+    await Promise.all([loadBudgetLineItems(), loadPendingChecks(), loadTypeaheadData()]);
     populatePickers();
   } catch(e) {
     toast('Failed to load sheet data: ' + e.message, 'err');
@@ -795,27 +804,66 @@ async function loadPendingChecks() {
   if (dot) dot.classList.toggle('show', pendingChecks.length > 0);
 }
 
+async function loadTypeaheadData() {
+  const data = await sheetsGet(RECEIPTS_SHEET_ID, RECEIPTS_TAB + '!C2:I500');
+  const rows = data.values || [];
+  const uniq = arr => [...new Set(arr.map(s => (s||'').trim()).filter(Boolean))].sort();
+  taData.requestorList = uniq(rows.map(r => r[0]));   // C
+  taData.payeeList     = uniq(rows.map(r => r[1]));   // D
+  taData.itemDescList  = uniq(rows.map(r => r[6]));   // I
+}
+
+// ─────────────────────────────────────────
+// GENERIC TYPEAHEAD
+// ─────────────────────────────────────────
+function taInput(input) {
+  const list = input.closest('.autocomplete').querySelector('.autocomplete-list');
+  const items = taData[input.dataset.ac] || [];
+  const q = input.value.toLowerCase().trim();
+  taActiveInput = input; taActiveList = list; taActiveIdx = -1;
+  if (!q) { list.classList.remove('open'); return; }
+  const matches = items.filter(s => s.toLowerCase().includes(q)).slice(0, 20);
+  if (!matches.length) { list.classList.remove('open'); return; }
+  taActiveItems = matches;
+  list.innerHTML = matches.map((s, i) =>
+    `<div class="ac-item" data-idx="${i}" onmousedown="taSelect('${s.replace(/\\/g,'\\\\').replace(/'/g,'\\\'')}')">`+
+    `<span class="ac-label">${s}</span></div>`
+  ).join('');
+  list.classList.add('open');
+}
+
+function taKey(e, input) {
+  const list = input.closest('.autocomplete').querySelector('.autocomplete-list');
+  if (!list.classList.contains('open')) return;
+  const items = list.querySelectorAll('.ac-item');
+  if (e.key === 'ArrowDown') { e.preventDefault(); taActiveIdx = Math.min(taActiveIdx+1, items.length-1); taHighlight(items); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); taActiveIdx = Math.max(taActiveIdx-1, 0); taHighlight(items); }
+  else if ((e.key === 'Enter' || e.key === 'Tab') && taActiveIdx >= 0) {
+    if (e.key === 'Enter') e.preventDefault();
+    taSelect(taActiveItems[taActiveIdx]);
+  } else if (e.key === 'Escape') { list.classList.remove('open'); }
+}
+
+function taHighlight(items) {
+  items.forEach((el, i) => el.classList.toggle('focused', i === taActiveIdx));
+  if (taActiveIdx >= 0) items[taActiveIdx].scrollIntoView({ block: 'nearest' });
+}
+
+function taSelect(value) {
+  if (taActiveInput) taActiveInput.value = value;
+  if (taActiveList) taActiveList.classList.remove('open');
+  taActiveIdx = -1;
+}
+
+function taBlur(input) {
+  const list = input.closest('.autocomplete').querySelector('.autocomplete-list');
+  setTimeout(() => list.classList.remove('open'), 160);
+}
+
 function populatePickers() {
   const monthOrder = ['July','Aug','Sept','Oct','Nov','Dec','Jan','Feb','March','April','May','Pending','June'];
   const monthTabs = sheetTabs.filter(t => monthOrder.includes(t.title))
     .sort((a,b) => monthOrder.indexOf(a.title) - monthOrder.indexOf(b.title));
-
-  // Check tab picker
-  const picker = document.getElementById('check-tab-picker');
-  picker.innerHTML = '';
-  monthTabs.forEach(t => {
-    const chip = document.createElement('button');
-    chip.className = 'tab-chip' + (t.title === 'Pending' ? ' active' : '');
-    chip.type = 'button';
-    chip.textContent = t.title;
-    chip.onclick = () => {
-      picker.querySelectorAll('.tab-chip').forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      selectedCheckTab = t.title;
-    };
-    picker.appendChild(chip);
-    if (t.title === 'Pending') selectedCheckTab = 'Pending';
-  });
 
   // Reconcile target select
   const reconSel = document.getElementById('recon-target-tab');
