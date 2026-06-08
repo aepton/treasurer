@@ -1,4 +1,4 @@
-# PTA Treasurer
+# Treasurer
 
 A single-page web app for PTA treasurer tasks: writing checks, reconciling bank statements, updating monthly balances, and exporting budget PDFs — all backed by your existing Google Sheets.
 
