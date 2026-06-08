@@ -687,7 +687,7 @@ function requestAccessToken(silent = false) {
     callback: handleToken,
     prompt: silent ? 'none' : '',
     error_callback: (e) => {
-      if (!silent) showSignIn();
+      showSignIn();
     }
   });
   tokenClient.requestAccessToken({ prompt: silent ? 'none' : '' });
