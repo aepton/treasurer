@@ -392,7 +392,7 @@ hr.sep { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 <div id="app" style="display:none">
   <header class="header">
     <div class="wordmark"><img src="logo.png" alt="" class="wordmark-logo"> PTA <em>Treasurer</em></div>
-    <nav class="nav">
+    <nav class="nav" style="display:none">
       <button class="nav-btn active" data-panel="checks" onclick="showPanel(this)">Write checks</button>
       <button class="nav-btn" data-panel="recon" onclick="showPanel(this)">Reconcile<span class="badge-dot" id="dot-recon"></span></button>
       <button class="nav-btn" data-panel="balances" onclick="showPanel(this)">Balances</button>
@@ -650,8 +650,8 @@ hr.sep { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 // ─────────────────────────────────────────
 const GOOGLE_CLIENT_ID = '446594000354-18m4dj6fmu7hp372a55laj9tcsds70nm.apps.googleusercontent.com';
 const BUDGET_SHEET_ID  = '1x6HmaCEN2KqBT6pwj4xLHxOcKJfNHHKUCloWyIN72GQ';
-const RECEIPTS_SHEET_ID = '1P0kgUbo5uDuG7C0EUNRTPxraQo9FAx53wvm9cMESzpA';
-const DRIVE_FOLDER_ID  = '1AokY0bNh_N0dhH5b5Qe2kBmHG2Jvyz6M';
+const RECEIPTS_SHEET_ID = '16MLvKnVdrvi1qcI65_nNKNVYkJ5CfDD4ae1o1uuvKCI';
+const DRIVE_FOLDER_ID  = '1e-5MXj9ggpKgYMFpN-4TB9cY5Prz6gp-';
 const RECEIPTS_TAB     = 'Receipts';
 
 const SCOPES = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive openid profile email';
